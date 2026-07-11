@@ -1,0 +1,180 @@
+:root {
+  --bg: #0b1020;
+  --bg-2: #131a33;
+  --card: #1a2242;
+  --card-edge: #2a355e;
+  --text: #eef1fb;
+  --muted: #9aa4c7;
+  --accent: #7c9cff;
+  --up: #4ade80;
+  --down: #f87171;
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #1b2447 0%, transparent 60%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 18px 8px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.1;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.app-header h1 span {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+.reset {
+  appearance: none;
+  border: 1px solid var(--card-edge);
+  background: var(--card);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.reset:active {
+  transform: scale(0.96);
+}
+
+.resources {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 10px 14px 6px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.card {
+  background: linear-gradient(180deg, var(--card) 0%, #161d3a 100%);
+  border: 1px solid var(--card-edge);
+  border-radius: 20px;
+  padding: 14px 14px 16px;
+  box-shadow: var(--shadow);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.card-icon {
+  font-size: 30px;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 14px;
+  flex: 0 0 auto;
+}
+
+.card-name {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.card-value {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  font-size: 34px;
+  font-weight: 800;
+  min-width: 72px;
+  text-align: right;
+  background: none;
+  border: none;
+  color: var(--text);
+  padding: 4px 2px;
+  border-radius: 10px;
+}
+
+.card-value:focus {
+  outline: 2px solid var(--accent);
+  background: rgba(124, 156, 255, 0.12);
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--card-edge);
+  background: #202a52;
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 700;
+  padding: 16px 0;
+  border-radius: 14px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+  touch-action: manipulation;
+  transition: transform 0.05s ease, background 0.15s ease;
+}
+
+.btn:active {
+  transform: scale(0.94);
+}
+
+.btn.up {
+  color: var(--up);
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+.btn.down {
+  color: var(--down);
+  border-color: rgba(248, 113, 113, 0.35);
+}
+
+.btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.app-footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 14px 14px calc(18px + env(safe-area-inset-bottom));
+}
