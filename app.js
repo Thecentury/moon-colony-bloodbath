@@ -10,8 +10,7 @@
     { id: "boxes", name: "Boxes", icon: "📦" }
   ];
 
-  // Adjustment steps offered per resource (down buttons and up buttons).
-  var STEPS = [5, 1];
+  var MAX_DIGITS = 6;
 
   function loadState() {
     var state = {};
@@ -33,54 +32,30 @@
     } catch (e) { /* ignore storage errors */ }
   }
 
-  var state = loadState();
-  var container = document.getElementById("resources");
-  var valueEls = {};
-  var cardEls = {};
-
   function clamp(n) {
     n = Math.floor(n);
     return isNaN(n) || n < 0 ? 0 : n;
   }
 
+  var state = loadState();
+  var container = document.getElementById("resources");
+  var valueEls = {};
+
+  function renderValue(id) {
+    if (valueEls[id]) valueEls[id].textContent = state[id];
+  }
+
   function setValue(id, n) {
     state[id] = clamp(n);
-    render(id);
+    renderValue(id);
     saveState();
   }
 
-  function render(id) {
-    var el = valueEls[id];
-    if (el && document.activeElement !== el) {
-      el.value = state[id];
-    }
-    // Disable "down" buttons that would go below zero.
-    var buttons = cardEls[id].querySelectorAll(".btn.down");
-    buttons.forEach(function (b) {
-      var step = parseInt(b.getAttribute("data-step"), 10);
-      b.disabled = state[id] < step;
-    });
-  }
-
-  function makeButton(id, delta) {
-    var btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "btn " + (delta > 0 ? "up" : "down");
-    btn.textContent = (delta > 0 ? "+" : "−") + Math.abs(delta);
-    btn.setAttribute("data-step", Math.abs(delta));
-    btn.setAttribute("aria-label", (delta > 0 ? "Add " : "Subtract ") + Math.abs(delta));
-    btn.addEventListener("click", function () {
-      setValue(id, state[id] + delta);
-    });
-    return btn;
-  }
+  // ---- Build resource cards -------------------------------------------------
 
   RESOURCES.forEach(function (r) {
     var card = document.createElement("section");
     card.className = "card";
-
-    var top = document.createElement("div");
-    top.className = "card-top";
 
     var icon = document.createElement("div");
     icon.className = "card-icon";
@@ -90,46 +65,136 @@
     name.className = "card-name";
     name.textContent = r.name;
 
-    var value = document.createElement("input");
+    var value = document.createElement("div");
     value.className = "card-value";
-    value.type = "number";
-    value.inputMode = "numeric";
-    value.min = "0";
-    value.setAttribute("aria-label", r.name + " count");
-    value.value = state[r.id];
-    value.addEventListener("focus", function () { value.select(); });
-    value.addEventListener("input", function () {
-      state[r.id] = clamp(value.value);
-      saveState();
-    });
-    value.addEventListener("blur", function () {
-      setValue(r.id, value.value);
-    });
-    value.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") { value.blur(); }
-    });
+    value.textContent = state[r.id];
     valueEls[r.id] = value;
 
-    top.appendChild(icon);
-    top.appendChild(name);
-    top.appendChild(value);
+    var minus = document.createElement("button");
+    minus.type = "button";
+    minus.className = "step down";
+    minus.textContent = "−";
+    minus.setAttribute("aria-label", "Subtract from " + r.name);
+    minus.addEventListener("click", function () { openKeypad(r, -1); });
 
-    var controls = document.createElement("div");
-    controls.className = "controls";
-    // Layout: -5  -1  +1  +5
-    STEPS.forEach(function (s) { controls.appendChild(makeButton(r.id, -s)); });
-    STEPS.slice().reverse().forEach(function (s) { controls.appendChild(makeButton(r.id, s)); });
+    var plus = document.createElement("button");
+    plus.type = "button";
+    plus.className = "step up";
+    plus.textContent = "+";
+    plus.setAttribute("aria-label", "Add to " + r.name);
+    plus.addEventListener("click", function () { openKeypad(r, 1); });
 
-    card.appendChild(top);
-    card.appendChild(controls);
+    card.appendChild(icon);
+    card.appendChild(name);
+    card.appendChild(value);
+    card.appendChild(minus);
+    card.appendChild(plus);
     container.appendChild(card);
-    cardEls[r.id] = card;
-
-    render(r.id);
   });
 
   document.getElementById("reset").addEventListener("click", function () {
     if (!window.confirm("Reset all resources to zero?")) return;
     RESOURCES.forEach(function (r) { setValue(r.id, 0); });
+  });
+
+  // ---- Keypad sheet ---------------------------------------------------------
+
+  var kp = { resource: null, sign: 1, entry: "" };
+
+  var overlay = document.createElement("div");
+  overlay.className = "sheet-overlay";
+  overlay.innerHTML =
+    '<div class="sheet" role="dialog" aria-modal="true" aria-label="Enter amount">' +
+      '<div class="sheet-head">' +
+        '<span class="sheet-icon"></span>' +
+        '<span class="sheet-name"></span>' +
+        '<span class="sheet-current"></span>' +
+      '</div>' +
+      '<div class="sheet-display">' +
+        '<span class="sheet-entry"></span>' +
+        '<span class="sheet-preview"></span>' +
+      '</div>' +
+      '<div class="keypad"></div>' +
+      '<div class="sheet-actions">' +
+        '<button type="button" class="action cancel">Cancel</button>' +
+        '<button type="button" class="action confirm">Confirm</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(overlay);
+
+  var sheetIcon = overlay.querySelector(".sheet-icon");
+  var sheetName = overlay.querySelector(".sheet-name");
+  var sheetCurrent = overlay.querySelector(".sheet-current");
+  var sheetEntry = overlay.querySelector(".sheet-entry");
+  var sheetPreview = overlay.querySelector(".sheet-preview");
+  var keypad = overlay.querySelector(".keypad");
+
+  var KEYS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "⌫", "0", "C"];
+  KEYS.forEach(function (k) {
+    var key = document.createElement("button");
+    key.type = "button";
+    key.className = "key";
+    key.textContent = k;
+    if (k === "⌫") key.setAttribute("aria-label", "Delete last digit");
+    if (k === "C") key.setAttribute("aria-label", "Clear");
+    key.addEventListener("click", function () { pressKey(k); });
+    keypad.appendChild(key);
+  });
+
+  function amount() {
+    return parseInt(kp.entry, 10) || 0;
+  }
+
+  function updateDisplay() {
+    var signChar = kp.sign > 0 ? "+" : "−";
+    sheetEntry.textContent = signChar + (kp.entry === "" ? "0" : kp.entry);
+    sheetEntry.classList.toggle("neg", kp.sign < 0);
+    var current = state[kp.resource.id];
+    var result = clamp(current + kp.sign * amount());
+    sheetPreview.textContent = current + " → " + result;
+  }
+
+  function pressKey(k) {
+    if (k === "C") {
+      kp.entry = "";
+    } else if (k === "⌫") {
+      kp.entry = kp.entry.slice(0, -1);
+    } else if (kp.entry.length < MAX_DIGITS) {
+      // Avoid leading zeros.
+      kp.entry = kp.entry === "" && k === "0" ? "" : kp.entry + k;
+    }
+    updateDisplay();
+  }
+
+  function openKeypad(resource, sign) {
+    kp.resource = resource;
+    kp.sign = sign;
+    kp.entry = "";
+    sheetIcon.textContent = resource.icon;
+    sheetName.textContent = resource.name;
+    sheetCurrent.textContent = "now " + state[resource.id];
+    updateDisplay();
+    overlay.classList.add("open");
+  }
+
+  function closeKeypad() {
+    overlay.classList.remove("open");
+    kp.resource = null;
+  }
+
+  overlay.querySelector(".confirm").addEventListener("click", function () {
+    if (kp.resource) setValue(kp.resource.id, state[kp.resource.id] + kp.sign * amount());
+    closeKeypad();
+  });
+  overlay.querySelector(".cancel").addEventListener("click", closeKeypad);
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) closeKeypad(); // tap outside the sheet cancels
+  });
+  document.addEventListener("keydown", function (e) {
+    if (!overlay.classList.contains("open")) return;
+    if (e.key === "Escape") closeKeypad();
+    else if (e.key === "Enter") overlay.querySelector(".confirm").click();
+    else if (e.key === "Backspace") pressKey("⌫");
+    else if (/^[0-9]$/.test(e.key)) pressKey(e.key);
   });
 })();

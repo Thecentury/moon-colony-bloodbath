@@ -3,8 +3,9 @@
 A tiny single-page app to track one player's resources in the *Moon Colony Bloodbath*
 board game: **People**, **Money** 🪙, **Food** 🍎, and **Boxes** 📦.
 
-- Adjust each resource up/down by **1** or **5**, or tap the number to type an exact value.
-- Resources can never go negative.
+- Tap **−** or **+** on a resource to open a numeric keypad, type any amount
+  (shown signed, e.g. `+12` or `−12`), then **Confirm** or **Cancel**.
+- Resources can never go negative (subtracting past zero stops at zero).
 - State is saved automatically in the browser (`localStorage`), so it survives reloads.
 - Designed for an iPhone screen (large tap targets, safe-area aware).
 
