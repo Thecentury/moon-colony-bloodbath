@@ -4,10 +4,10 @@
   var STORAGE_KEY = "mcb-resources-v1";
 
   var RESOURCES = [
-    { id: "people", name: "People", icon: "🧑‍🚀" },
-    { id: "money", name: "Money", icon: "🪙" },
-    { id: "food", name: "Food", icon: "🍎" },
-    { id: "boxes", name: "Boxes", icon: "📦" }
+    { id: "people", name: "People", icon: "🧑‍🚀", start: 30 },
+    { id: "money", name: "Money", icon: "🪙", start: 4 },
+    { id: "food", name: "Food", icon: "🍎", start: 4 },
+    { id: "boxes", name: "Boxes", icon: "📦", start: 0 }
   ];
 
   var MAX_DIGITS = 6;
@@ -17,11 +17,12 @@
     try {
       var saved = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
       RESOURCES.forEach(function (r) {
-        var v = parseInt(saved[r.id], 10);
+        // Fall back to the resource's starting value when nothing is saved yet.
+        var v = r.id in saved ? parseInt(saved[r.id], 10) : r.start;
         state[r.id] = isNaN(v) || v < 0 ? 0 : v;
       });
     } catch (e) {
-      RESOURCES.forEach(function (r) { state[r.id] = 0; });
+      RESOURCES.forEach(function (r) { state[r.id] = r.start; });
     }
     return state;
   }
@@ -93,8 +94,8 @@
   });
 
   document.getElementById("reset").addEventListener("click", function () {
-    if (!window.confirm("Reset all resources to zero?")) return;
-    RESOURCES.forEach(function (r) { setValue(r.id, 0); });
+    if (!window.confirm("Start a new game? Resources return to their starting values.")) return;
+    RESOURCES.forEach(function (r) { setValue(r.id, r.start); });
   });
 
   // ---- Keypad sheet ---------------------------------------------------------

@@ -6,6 +6,8 @@ board game: **People**, **Money** 🪙, **Food** 🍎, and **Boxes** 📦.
 - Tap **−** or **+** on a resource to open a numeric keypad, type any amount
   (shown signed, e.g. `+12` or `−12`), then **Confirm** or **Cancel**.
 - Resources can never go negative (subtracting past zero stops at zero).
+- New games start at People **30**, Money **4**, Food **4**, Boxes **0**.
+  **Reset** restores those starting values.
 - State is saved automatically in the browser (`localStorage`), so it survives reloads.
 - Designed for an iPhone screen (large tap targets, safe-area aware).
 
